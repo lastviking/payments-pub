@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package payments.v1;
+
+option go_package = "github.com/lastviking/payments-proto/gen/go/payments/v1;paymentsv1";
+option java_multiple_files = true;
+option java_package = "eu.lastviking.payments.v1";
+
+import "google/protobuf/timestamp.proto";
+import "payments/v1/payments.proto";
+
+//
+// BackendNotifications: implemented by your backend services.
+// The payment service calls these endpoints best-effort.
+//
+// No streaming: avoids synchronization issues.
+// Delivery is at-least-once; receivers must be idempotent.
+//
+service BackendNotifications {
+  // Notifies a backend that an entitlement changed.
+  rpc NotifyEntitlementChanged(NotifyEntitlementChangedRequest)
+      returns (NotifyEntitlementChangedResponse);
+}
+
+message NotifyEntitlementChangedRequest {
+  // Unique id for this notification event (UUID recommended).
+  // Receiver should de-duplicate on this value (store for a while).
+  string event_id = 1;
+
+  // When the payment service emitted this event.
+  google.protobuf.Timestamp emitted_at = 2;
+
+  // The new state.
+  Entitlement entitlement = 3;
+
+  // Optional: why it changed (useful for logs/UX).
+  ChangeReason reason = 4;
+
+  // Optional: provider event id for correlation (Stripe event id, Pub/Sub message id).
+  string provider_event_id = 5;
+}
+
+message NotifyEntitlementChangedResponse {
+  // Receiver processed successfully.
+  bool ok = 1;
+
+  // If ok=false, receiver may include a short reason (for logs only).
+  string message = 2;
+
+  // The highest entitlement.version the receiver has applied for this tenant+product.
+  // Payment service can use this to suppress retries of older versions.
+  uint64 applied_version = 3;
+}
+
+enum ChangeReason {
+  CHANGE_REASON_UNSPECIFIED = 0;
+
+  CHANGE_REASON_SUBSCRIPTION_CREATED = 1;
+  CHANGE_REASON_SUBSCRIPTION_UPDATED = 2;
+  CHANGE_REASON_SUBSCRIPTION_CANCELED = 3;
+
+  CHANGE_REASON_PAYMENT_SUCCEEDED = 4;
+  CHANGE_REASON_PAYMENT_FAILED = 5;
+
+  CHANGE_REASON_RECONCILED = 6;
+  CHANGE_REASON_ADMIN_OVERRIDE = 7;
+}
