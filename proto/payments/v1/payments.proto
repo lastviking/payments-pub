@@ -67,7 +67,7 @@ message CreateSubscriptionIntentRequest {
   string cancel_url = 7;
 
   // Optional: for correlation / de-duplication on caller side.
-  string client_reference_id = 7;
+  string client_reference_id = 8;
 }
 
 message CreateSubscriptionIntentResponse {
