@@ -206,6 +206,12 @@ If the same version is applied twice, it must be safe.
 
 We recommend using `buf` for linting and generation.
 
+## Validate Protos Manually
+
+```bash
+./scripts/validate-protos.sh
+```
+
 Example `buf.yaml`:
 
 ```yaml
