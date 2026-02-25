@@ -10,13 +10,13 @@ import "google/protobuf/timestamp.proto";
 import "payments/v1/payments.proto";
 
 //
-// BackendNotifications: implemented by your backend services.
+// BackendNotificationsService: implemented by your backend services.
 // The payment service calls these endpoints best-effort.
 //
 // No streaming: avoids synchronization issues.
 // Delivery is at-least-once; receivers must be idempotent.
 //
-service BackendNotifications {
+service BackendNotificationsService {
   // Notifies a backend that an entitlement changed.
   rpc NotifyEntitlementChanged(NotifyEntitlementChangedRequest)
       returns (NotifyEntitlementChangedResponse);

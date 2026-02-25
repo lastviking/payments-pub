@@ -23,7 +23,7 @@ The goal is:
 Product Backend  --->  PaymentsService  --->  Stripe / Google Play
         ^                    |
         |                    v
-        +---- BackendNotifications (best effort)
+        +---- BackendNotificationsService (best effort)
 ```
 
 ## Responsibilities
@@ -40,7 +40,7 @@ Product Backend  --->  PaymentsService  --->  Stripe / Google Play
 
 * Call `GetEntitlement` before delivering paid features
 * Initiate subscription flows via `CreateSubscriptionIntent`
-* Implement `BackendNotifications` for faster UX (optional)
+* Implement `BackendNotificationsService` for faster UX (optional)
 * Must be idempotent
 
 ---
@@ -109,7 +109,7 @@ Clients should:
 * Retry safely where appropriate
 * Treat responses as authoritative
 
-## BackendNotifications (payment → backend)
+## BackendNotificationsService (payment → backend)
 
 Delivery is **at-least-once**.
 
