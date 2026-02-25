@@ -1,3 +1,5 @@
+[![Validate Protos](https://github.com/lastviking/payments-pub/actions/workflows/validate-protos.yml/badge.svg)](https://github.com/lastviking/payments-pub/actions/workflows/validate-protos.yml)
+
 # Payments Proto
 
 Shared gRPC protocol definitions for The Last Viking's online payment system.
