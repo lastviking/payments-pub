@@ -13,16 +13,17 @@ import "google/protobuf/timestamp.proto";
 // Called by other backend services over VPN (mTLS auth).
 //
 service PaymentsService {
+  // Create a short-lived checkout context for a browser-driven checkout flow.
+  // The backend later hands the returned hosted_page_url / context id to the browser,
+  // and the browser starts checkout through the public HTTPS API.
+  rpc CreateCheckoutContext(CreateCheckoutContextRequest)
+      returns (CreateCheckoutContextResponse);
+
   // Returns the current entitlement state for a tenant.
   rpc GetEntitlement(GetEntitlementRequest) returns (GetEntitlementResponse);
 
   // Batch form (useful for dashboards / backfills).
   rpc GetEntitlements(GetEntitlementsRequest) returns (GetEntitlementsResponse);
-
-  // Initiate a new subscription flow (typically Stripe Checkout or Billing Portal).
-  // For Google Play, this may return UNIMPLEMENTED or a no-op depending on your client flow.
-  rpc CreateSubscriptionIntent(CreateSubscriptionIntentRequest)
-      returns (CreateSubscriptionIntentResponse);
 
   // Optional "fast path" confirmation after user returns from Stripe.
   // Webhooks remain the durable truth; this just improves UX.
@@ -33,6 +34,35 @@ service PaymentsService {
   // after the mobile client completes purchase).
   rpc RegisterGooglePlayPurchase(RegisterGooglePlayPurchaseRequest)
       returns (RegisterGooglePlayPurchaseResponse);
+}
+
+message CreateCheckoutContextRequest {
+  string tenant_id = 1;
+  string product_id = 2;
+
+  // Optional allow-list of plans the browser may choose from.
+  repeated string allowed_plan_ids = 3;
+
+  // Optional initial seat suggestion shown to the browser flow.
+  optional int32 initial_seats = 4;
+
+  // Optional tighter seat bounds imposed by the calling backend.
+  optional int32 min_seats = 5;
+  optional int32 max_seats = 6;
+
+  // Browser redirect targets controlled by the product backend.
+  string return_url = 7;
+  string cancel_url = 8;
+  string success_url = 9;
+
+  // Optional caller correlation id.
+  string client_reference_id = 10;
+}
+
+message CreateCheckoutContextResponse {
+  string checkout_context_id = 1;
+  string hosted_page_url = 2;
+  google.protobuf.Timestamp expires_at = 3;
 }
 
 message GetEntitlementRequest {
@@ -51,36 +81,6 @@ message GetEntitlementsRequest {
 
 message GetEntitlementsResponse {
   repeated Entitlement entitlements = 1;
-}
-
-message CreateSubscriptionIntentRequest {
-  string tenant_id = 1;
-  string product_id = 2;
-  string plan_id = 3;
-  optional int32 seats = 4; // Ie, NextApp, number of users
-
-  PaymentProvider provider = 5;
-
-  // The backend should generate these URLs and pass them through.
-  // Used for Stripe Checkout / Portal flows.
-  string return_url = 6;
-  string cancel_url = 7;
-
-  // Optional: for correlation / de-duplication on caller side.
-  string client_reference_id = 8;
-}
-
-message CreateSubscriptionIntentResponse {
-  // URL the user should be redirected to (Stripe Checkout / Portal).
-  string url = 1;
-
-  // Provider-specific reference (e.g. Stripe checkout_session_id).
-  string external_reference = 2;
-
-  // A server-generated id for this intent (stable, unique).
-  string intent_id = 3;
-
-  google.protobuf.Timestamp created_at = 4;
 }
 
 message ConfirmExternalPurchaseRequest {

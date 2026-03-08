@@ -41,7 +41,7 @@ Product Backend  --->  PaymentsService  --->  Stripe / Google Play
 ### Product Backends
 
 * Call `GetEntitlement` before delivering paid features
-* Initiate subscription flows via `CreateSubscriptionIntent`
+* Create browser-safe checkout contexts via `CreateCheckoutContext`
 * Implement `BackendNotificationsService` for faster UX (optional)
 * Must be idempotent
 
@@ -110,6 +110,12 @@ Clients should:
 * Use deadlines/timeouts
 * Retry safely where appropriate
 * Treat responses as authoritative
+
+Recommended flow for browser purchases:
+
+1. Backend calls `CreateCheckoutContext`
+2. Browser uses the returned context with the public checkout-start HTTPS API
+3. Backend confirms or polls entitlement using `ConfirmExternalPurchase` / `GetEntitlement`
 
 ## BackendNotificationsService (payment → backend)
 
@@ -192,6 +198,10 @@ Always rely on the normalized `EntitlementState`.
 Clients may include `client_reference_id` to correlate retries.
 
 Payment Service must treat duplicate confirmations safely.
+
+For browser checkout flows, clients should avoid sending raw tenant/product/plan/seats
+from the browser as authoritative values. Those must be constrained by the stored
+checkout context created over gRPC.
 
 ## Payment Service → Backend
 
