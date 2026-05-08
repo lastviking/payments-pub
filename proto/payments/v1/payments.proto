@@ -34,6 +34,9 @@ service PaymentsService {
   // after the mobile client completes purchase).
   rpc RegisterGooglePlayPurchase(RegisterGooglePlayPurchaseRequest)
       returns (RegisterGooglePlayPurchaseResponse);
+
+  // Get the plans from the plan registry.
+  rpc GetPlans(GetPlansRequest) returns (GetPlansResponse);
 }
 
 message CreateCheckoutContextRequest {
@@ -174,4 +177,20 @@ message Entitlement {
   uint64 version = 8;
 
   google.protobuf.Timestamp updated_at = 9;
+}
+
+// Generic representation of a plan.
+// The payment server may act as the authorative repository for plans used by a backend.
+message Plan {
+  string plan_id = 1;
+  int32 version = 2; // Version of the plan. If a backend already have the version, it don't have to check the values.
+  map<string, string> values = 3; // Only string values for simplicity
+}
+
+message GetPlansResponse {
+  repeated Plan plans = 1;
+}
+
+message GetPlansRequest {
+  string product_id = 1;
 }
