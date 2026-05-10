@@ -189,6 +189,8 @@ message Plan {
 
 message GetPlansResponse {
   repeated Plan plans = 1;
+  string default_for_signup = 2; // If empty, falls back to free plan
+  string default_for_free = 3; // If unset, users will not be able to subscribe without a trial or commercial plan.
 }
 
 message GetPlansRequest {
