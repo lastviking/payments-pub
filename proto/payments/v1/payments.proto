@@ -191,6 +191,7 @@ message GetPlansResponse {
   repeated Plan plans = 1;
   string default_for_signup = 2; // If empty, falls back to free plan
   string default_for_free = 3; // If unset, users will not be able to subscribe without a trial or commercial plan.
+  optional int32 trial_days = 4; // Informational trial length for this product's plans, if any.
 }
 
 message GetPlansRequest {
