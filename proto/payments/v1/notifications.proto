@@ -10,19 +10,26 @@ import "google/protobuf/timestamp.proto";
 import "payments/v1/payments.proto";
 
 //
-// BackendNotificationsService: implemented by your backend services.
-// The payment service calls these endpoints best-effort.
+// EntitlementNotificationsService: implemented by the payment service.
+// Product backends connect and receive a best-effort stream of recent
+// entitlement changes plus live updates.
 //
-// No streaming: avoids synchronization issues.
 // Delivery is at-least-once; receivers must be idempotent.
+// New streams replay a recent backlog before switching to live updates.
 //
-service BackendNotificationsService {
-  // Notifies a backend that an entitlement changed.
-  rpc NotifyEntitlementChanged(NotifyEntitlementChangedRequest)
-      returns (NotifyEntitlementChangedResponse);
+service EntitlementNotificationsService {
+  // Subscribe to recent and live entitlement changes.
+  rpc SubscribeEntitlementChanges(SubscribeEntitlementChangesRequest)
+      returns (stream EntitlementChangeEvent);
 }
 
-message NotifyEntitlementChangedRequest {
+message SubscribeEntitlementChangesRequest {
+  // Unique id for this backend instance (UUID recommended).
+  // Used for observability and troubleshooting.
+  string backend_instance_id = 1;
+}
+
+message EntitlementChangeEvent {
   // Unique id for this notification event (UUID recommended).
   // Receiver should de-duplicate on this value (store for a while).
   string event_id = 1;
@@ -33,23 +40,15 @@ message NotifyEntitlementChangedRequest {
   // The new state.
   Entitlement entitlement = 3;
 
+  // Product-defined routing subject.
+  // For nextapp, this is the tenant id.
+  string subject_id = 4;
+
   // Optional: why it changed (useful for logs/UX).
-  ChangeReason reason = 4;
+  ChangeReason reason = 5;
 
   // Optional: provider event id for correlation (Stripe event id, Pub/Sub message id).
-  string provider_event_id = 5;
-}
-
-message NotifyEntitlementChangedResponse {
-  // Receiver processed successfully.
-  bool ok = 1;
-
-  // If ok=false, receiver may include a short reason (for logs only).
-  string message = 2;
-
-  // The highest entitlement.version the receiver has applied for this tenant+product.
-  // Payment service can use this to suppress retries of older versions.
-  uint64 applied_version = 3;
+  string provider_event_id = 6;
 }
 
 enum ChangeReason {
