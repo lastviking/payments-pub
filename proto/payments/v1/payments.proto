@@ -13,6 +13,11 @@ import "google/protobuf/timestamp.proto";
 // Called by other backend services over VPN (mTLS auth).
 //
 service PaymentsService {
+  // Ensure that a tenant has an initialized effective plan in the payment backend.
+  // This is idempotent and may assign a local trial or free plan according to product defaults.
+  rpc EnsureTenantInitialized(EnsureTenantInitializedRequest)
+      returns (EnsureTenantInitializedResponse);
+
   // Create a short-lived checkout context for a browser-driven checkout flow.
   // The backend later hands the returned hosted_page_url / context id to the browser,
   // and the browser starts checkout through the public HTTPS API.
@@ -66,6 +71,18 @@ message CreateCheckoutContextResponse {
   string checkout_context_id = 1;
   string hosted_page_url = 2;
   google.protobuf.Timestamp expires_at = 3;
+}
+
+message EnsureTenantInitializedRequest {
+  string tenant_id = 1;
+  string product_id = 2;
+}
+
+message EnsureTenantInitializedResponse {
+  Entitlement entitlement = 1;
+
+  // True when the payment backend created initial local plan state for the tenant.
+  bool initialized = 2;
 }
 
 message GetEntitlementRequest {
@@ -136,6 +153,8 @@ enum PaymentProvider {
   PAYMENT_PROVIDER_UNSPECIFIED = 0;
   PAYMENT_PROVIDER_STRIPE = 1;
   PAYMENT_PROVIDER_GOOGLE_PLAY = 2;
+  PAYMENT_PROVIDER_LOCAL = 3;
+  PAYMENT_PROVIDER_MANUAL_ADMIN = 4;
 }
 
 enum EntitlementState {
