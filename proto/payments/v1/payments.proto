@@ -27,8 +27,9 @@ service PaymentsService {
   // Returns the current entitlement state for a tenant.
   rpc GetEntitlement(GetEntitlementRequest) returns (GetEntitlementResponse);
 
-  // Batch form (useful for dashboards / backfills).
-  rpc GetEntitlements(GetEntitlementsRequest) returns (GetEntitlementsResponse);
+  // Stream current effective entitlements for batch-processing, exports, or disaster recovery.
+  rpc StreamEntitlements(StreamEntitlementsRequest)
+      returns (stream StreamEntitlementsResponse);
 
   // Optional "fast path" confirmation after user returns from Stripe.
   // Webhooks remain the durable truth; this just improves UX.
@@ -87,6 +88,7 @@ message EnsureTenantInitializedResponse {
 
 message GetEntitlementRequest {
   string tenant_id = 1;
+  // Optional. If empty, the server resolves product_id from tenant state and fails if ambiguous.
   string product_id = 2; // NextApp, nsblast ...
 }
 
@@ -94,13 +96,16 @@ message GetEntitlementResponse {
   Entitlement entitlement = 1;
 }
 
-message GetEntitlementsRequest {
-  repeated string tenant_ids = 1;
-  string product_id = 2;
+message StreamEntitlementsRequest {
+  string product_id = 1;
+  repeated string tenant_ids = 2;
+  repeated PaymentProvider sources = 3;
+  repeated EntitlementState states = 4;
+  bool include_inactive = 5;
 }
 
-message GetEntitlementsResponse {
-  repeated Entitlement entitlements = 1;
+message StreamEntitlementsResponse {
+  Entitlement entitlement = 1;
 }
 
 message ConfirmExternalPurchaseRequest {
