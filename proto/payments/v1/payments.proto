@@ -201,6 +201,14 @@ message Entitlement {
   uint64 version = 8;
 
   google.protobuf.Timestamp updated_at = 9;
+
+  // True when the provider has scheduled the entitlement to cancel at the end
+  // of the current paid period. Service may still be active until valid_until.
+  bool cancel_at_period_end = 11;
+
+  // Structured provider cancellation reason, if available.
+  // For Stripe this maps to cancellation feedback/reason enums.
+  string cancellation_reason = 12;
 }
 
 // Generic representation of a plan.
