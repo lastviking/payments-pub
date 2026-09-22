@@ -21,6 +21,18 @@ service EntitlementNotificationsService {
   // Subscribe to recent and live entitlement changes.
   rpc SubscribeEntitlementChanges(SubscribeEntitlementChangesRequest)
       returns (stream EntitlementChangeEvent);
+
+  // Subscribe to recent and live entitlement changes with periodic heartbeats.
+  // Prefer this RPC when the client needs to distinguish an idle stream from
+  // a broken connection. SubscribeEntitlementChanges remains available for
+  // backward compatibility.
+  //
+  // The server sends a heartbeat every 60 seconds while the stream is open,
+  // including during replay and live idle periods. Clients should treat either
+  // payload variant as proof of liveness and reconnect after three missed
+  // heartbeat intervals.
+  rpc SubscribeEntitlementNotifications(SubscribeEntitlementChangesRequest)
+      returns (stream EntitlementNotification);
 }
 
 message SubscribeEntitlementChangesRequest {
@@ -49,6 +61,18 @@ message EntitlementChangeEvent {
 
   // Optional: provider event id for correlation (Stripe event id, Pub/Sub message id).
   string provider_event_id = 6;
+}
+
+message EntitlementNotification {
+  oneof payload {
+    EntitlementChangeEvent change = 1;
+    EntitlementHeartbeat heartbeat = 2;
+  }
+}
+
+message EntitlementHeartbeat {
+  // When the payment service emitted this heartbeat.
+  google.protobuf.Timestamp emitted_at = 1;
 }
 
 enum ChangeReason {
